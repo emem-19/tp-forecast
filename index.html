@@ -274,6 +274,16 @@ select:focus,input:focus{outline:none;border-color:var(--blue);}
     <div class="card-t">每月底填入實際業績</div>
     <div class="card-b">業績確認後貼入，工具會自動更新 YoY 基準線和下個月的預警閾值。同步到 Google Sheet 後所有人都能看到最新數據。</div>
   </div>
+
+  <div style="background:var(--surface);border:0.5px solid var(--border);border-radius:var(--r2);padding:14px 16px;margin-bottom:1rem;">
+    <div style="font-size:13px;font-weight:500;margin-bottom:4px;">各店月目標設定</div>
+    <div style="font-size:11px;color:var(--text2);margin-bottom:12px;">修改後立即反映在預警和預測頁面，並同步到 Google Sheet</div>
+    <div class="g3" id="target-inputs"></div>
+    <div style="display:flex;gap:8px;align-items:center;margin-top:4px;">
+      <button class="btn btn-primary" onclick="saveTargets()">儲存目標 →</button>
+      <span id="tgt-msg" style="font-size:11px;color:var(--green);"></span>
+    </div>
+  </div>
   <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:.75rem;">
     <div><div style="font-size:10px;color:var(--text2);margin-bottom:3px;">更新月份</div>
       <select id="upd-month" style="width:100px;">
@@ -330,7 +340,7 @@ let D = {
     '武骨':[1850905,2256750,1949793,0,0,0,0,0,0,0,0,0],
     '信義':[1864365,1622378,1471587,0,0,0,0,0,0,0,0,0],
   },
-  targets: {'本店':2070000,'神山':2100000,'光復':1730000,'台中':1800000,'武骨':1940000,'信義':1650000},
+  targets: {'本店':2070000,'神山':2100000,'光復':1730000,'台中':1800000,'武骨':1940000,'信義':2300000},
   activities: [
     // ── 限定麵：春季料理長（4/21–5/21，五店）──
     // vs_base = 季節基準修正值（剔除季節因素，比MoM更準確）
@@ -854,6 +864,46 @@ async function updateMonth() {
   setTimeout(()=>document.getElementById('upd-msg').textContent='',3000);
 }
 
+function renderTargetInputs() {
+  const el = document.getElementById('target-inputs');
+  if(!el) return;
+  const STORE_COLORS_BG = {
+    '本店':'var(--blueL)','神山':'var(--tealL)','光復':'var(--amberL)',
+    '台中':'var(--surface2)','武骨':'var(--purpleL)','信義':'var(--redL)'
+  };
+  el.innerHTML = STORES.map(s => `
+    <div>
+      <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
+        <span style="font-size:11px;font-weight:500;">${s}</span>
+        ${s==='信義'?'<span class="badge b-r" style="font-size:9px;">百貨合約</span>':''}
+      </div>
+      <input type="number" id="tgt-${s}" value="${D.targets[s]}"
+        step="10000" style="width:100%;font-size:12px;padding:4px 8px;
+        background:${STORE_COLORS_BG[s]||'var(--surface2)'};">
+    </div>`).join('');
+}
+
+async function saveTargets() {
+  const promises = [];
+  STORES.forEach(s => {
+    const el = document.getElementById('tgt-'+s);
+    if(!el) return;
+    const v = parseInt(el.value);
+    if(v > 0 && v !== D.targets[s]) {
+      D.targets[s] = v;
+      promises.push(postData({action:'update_target', store:s, value:v}));
+    }
+  });
+  await Promise.all(promises);
+  const msg = document.getElementById('tgt-msg');
+  msg.textContent = '目標已儲存，預警和預測頁面已更新';
+  msg.style.color = 'var(--green)';
+  setTimeout(()=>msg.textContent='', 3000);
+  // 同步更新預測頁
+  renderForecast();
+  renderAlert();
+}
+
 function renderHistory() {
   const known = [];
   STORES.forEach(s=>{
@@ -886,12 +936,13 @@ function sw(n){
   });
   if(n==='calendar') renderCalendar();
   if(n==='db') renderDB();
-  if(n==='update') renderHistory();
+  if(n==='update'){ renderHistory(); renderTargetInputs(); }
 }
 
 function renderAll(){
   renderForecast();
   renderHistory();
+  renderTargetInputs();
 }
 </script>
 </body>
