@@ -1,0 +1,898 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>麵屋武藏 業績規劃工具</title>
+<style>
+/* ── Reset & Base ── */
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg:#F8F6F1;--surface:#FFFFFF;--surface2:#F1EFE8;
+  --border:#E2E8F0;--border2:#CBD5E1;
+  --text:#1A1A1A;--text2:#64748B;--text3:#94A3B8;
+  --navy:#1B3A6B;--blue:#1D6FA5;--blueL:#E6F1FB;
+  --green:#3B6D11;--greenL:#EAF3DE;
+  --amber:#854F0B;--amberL:#FAEEDA;
+  --red:#A32D2D;--redL:#FCEBEB;
+  --purple:#3C3489;--purpleL:#EEEDFE;
+  --r:8px;--r2:12px;
+}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);font-size:14px;min-height:100vh;}
+
+/* ── Layout ── */
+.app{max-width:1100px;margin:0 auto;padding:1.5rem 1rem;}
+.header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem;flex-wrap:wrap;gap:.5rem;}
+.header-title{font-size:18px;font-weight:600;color:var(--navy);}
+.header-sub{font-size:12px;color:var(--text2);margin-top:2px;}
+.sync-btn{font-size:12px;padding:5px 12px;border-radius:var(--r);border:0.5px solid var(--border2);background:var(--surface);cursor:pointer;color:var(--text2);transition:all .15s;}
+.sync-btn:hover{background:var(--surface2);}
+.sync-status{font-size:11px;color:var(--text3);margin-left:8px;}
+
+/* ── Tabs ── */
+.tabs{display:flex;border-bottom:1px solid var(--border);margin-bottom:1.25rem;flex-wrap:wrap;gap:0;}
+.tab{font-size:13px;padding:8px 14px;cursor:pointer;color:var(--text2);border:none;border-bottom:2px solid transparent;background:none;transition:all .15s;white-space:nowrap;}
+.tab.active{color:var(--navy);border-bottom-color:var(--navy);font-weight:500;}
+.view{display:none;}.view.show{display:block;}
+
+/* ── Components ── */
+.sec{font-size:10px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--text2);margin:1.25rem 0 .5rem;}
+.card{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--r2);padding:12px 14px;margin-bottom:8px;}
+.card-t{font-size:12px;font-weight:600;margin-bottom:4px;color:var(--text);}
+.card-b{font-size:12px;color:var(--text2);line-height:1.7;}
+.mc{background:var(--surface2);border-radius:var(--r);padding:10px 12px;}
+.mc .l{font-size:10px;color:var(--text2);margin-bottom:2px;}
+.mc .v{font-size:18px;font-weight:600;color:var(--text);}
+.mc .s{font-size:10px;color:var(--text3);margin-top:2px;line-height:1.5;}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:.75rem;}
+.g3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-bottom:.75rem;}
+.g4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin-bottom:.75rem;}
+.g6{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin-bottom:.75rem;}
+.badge{font-size:10px;padding:2px 7px;border-radius:20px;display:inline-block;white-space:nowrap;}
+.b-g{background:var(--greenL);color:var(--green);}
+.b-a{background:var(--amberL);color:var(--amber);}
+.b-r{background:var(--redL);color:var(--red);}
+.b-b{background:var(--blueL);color:var(--blue);}
+.b-p{background:var(--purpleL);color:var(--purple);}
+.b-n{background:var(--surface2);color:var(--text2);}
+.alert-box{border-radius:var(--r);padding:9px 12px;margin-bottom:6px;}
+.alert-box.red{background:var(--redL);border:0.5px solid #F09595;}
+.alert-box.amber{background:var(--amberL);border:0.5px solid #EF9F27;}
+.alert-box.green{background:var(--greenL);border:0.5px solid #C0DD97;}
+.alert-box.navy{background:var(--blueL);border:0.5px solid #B5D4F4;}
+.alert-box .at{font-size:11px;font-weight:600;margin-bottom:3px;}
+.alert-box .ab{font-size:11px;line-height:1.7;}
+.tbl{width:100%;border-collapse:collapse;font-size:12px;}
+.tbl th{text-align:left;padding:7px 10px;color:var(--text2);font-weight:400;border-bottom:0.5px solid var(--border);font-size:11px;}
+.tbl td{padding:7px 10px;border-bottom:0.5px solid var(--border);vertical-align:middle;}
+.tbl tr:last-child td{border-bottom:none;}
+.tbl tr:hover td{background:var(--surface2);}
+.bar-bg{width:100%;height:5px;background:var(--surface2);border-radius:3px;overflow:hidden;}
+.bar-fill{height:100%;border-radius:3px;transition:width .4s;}
+select,input[type=number],input[type=text]{
+  font-size:12px;padding:5px 9px;border-radius:var(--r);
+  border:0.5px solid var(--border2);background:var(--surface);
+  color:var(--text);width:100%;
+}
+select:focus,input:focus{outline:none;border-color:var(--blue);}
+.btn{font-size:12px;padding:6px 14px;border-radius:var(--r);border:0.5px solid var(--border2);background:var(--surface);cursor:pointer;color:var(--text);transition:all .15s;}
+.btn:hover{background:var(--surface2);}
+.btn-primary{background:var(--navy);color:#fff;border-color:var(--navy);}
+.btn-primary:hover{background:#1a4a8a;}
+.heat-row{display:grid;grid-template-columns:56px repeat(12,minmax(0,1fr));gap:3px;margin-bottom:3px;align-items:center;}
+.heat-cell{height:26px;border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:600;cursor:default;}
+.heat-label{font-size:11px;color:var(--text2);text-align:right;padding-right:6px;}
+.month-head{text-align:center;font-size:9px;color:var(--text3);padding:2px 0;}
+.progress-ring{position:relative;display:inline-flex;align-items:center;justify-content:center;}
+.store-tag{display:inline-block;font-size:10px;padding:2px 7px;border-radius:20px;font-weight:500;}
+.loading{text-align:center;padding:2rem;color:var(--text2);font-size:13px;}
+.err{color:var(--red);font-size:12px;padding:.5rem 0;}
+/* Calendar */
+.cal-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-bottom:1rem;}
+.cal-card{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--r2);padding:10px 12px;}
+.cal-card .cc-m{font-size:13px;font-weight:600;margin-bottom:2px;}
+.cal-card .cc-weak{font-size:10px;margin-bottom:6px;}
+.cal-chip{font-size:9px;padding:2px 6px;border-radius:20px;display:inline-block;margin:1px 2px 1px 0;}
+.cal-card .cc-sug{font-size:10px;color:var(--text2);margin-top:6px;line-height:1.65;}
+@media(max-width:600px){
+  .g2,.g3,.g4,.g6{grid-template-columns:1fr;}
+  .cal-grid{grid-template-columns:1fr 1fr;}
+  .heat-row{grid-template-columns:40px repeat(12,minmax(0,1fr));}
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- Header -->
+<div class="header">
+  <div>
+    <div class="header-title">麵屋武藏 業績規劃工具</div>
+    <div class="header-sub" id="last-sync">尚未同步資料</div>
+  </div>
+  <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+    <input type="text" id="api-url" placeholder="貼上 Apps Script 網址" style="width:320px;font-size:11px;" />
+    <button class="btn btn-primary" onclick="syncData()">同步資料 ↻</button>
+  </div>
+</div>
+
+<!-- Tabs -->
+<div class="tabs">
+  <button class="tab active" onclick="sw('forecast')">業績預測</button>
+  <button class="tab" onclick="sw('alert')">即時預警</button>
+  <button class="tab" onclick="sw('calendar')">活動行事曆</button>
+  <button class="tab" onclick="sw('db')">活動效益庫</button>
+  <button class="tab" onclick="sw('update')">每月更新</button>
+</div>
+
+<!-- ① 業績預測 -->
+<div class="view show" id="view-forecast">
+  <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:1rem;">
+    <select id="fc-store" onchange="renderForecast()" style="width:100px;">
+      <option>本店</option><option>神山</option><option>光復</option>
+      <option>台中</option><option>武骨</option><option>信義</option>
+    </select>
+    <select id="fc-month" onchange="renderForecast()" style="width:100px;">
+      <option value="4" selected>4月</option><option value="5">5月</option>
+      <option value="6">6月</option><option value="7">7月</option>
+      <option value="8">8月</option><option value="9">9月</option>
+      <option value="10">10月</option><option value="11">11月</option>
+      <option value="12">12月</option>
+    </select>
+  </div>
+  <div id="fc-output"><div class="loading">請先同步 Google Sheet 資料，或使用預設歷史數據</div></div>
+</div>
+
+<!-- ② 即時預警 -->
+<div class="view" id="view-alert">
+  <div class="sec">輸入截至今日各店業績</div>
+  <div class="g6" style="margin-bottom:.75rem;">
+    <div><div style="font-size:10px;color:var(--text2);margin-bottom:3px;">本店</div><input type="number" id="al-0" placeholder="例：900000" oninput="renderAlert()"></div>
+    <div><div style="font-size:10px;color:var(--text2);margin-bottom:3px;">神山</div><input type="number" id="al-1" placeholder="例：700000" oninput="renderAlert()"></div>
+    <div><div style="font-size:10px;color:var(--text2);margin-bottom:3px;">光復</div><input type="number" id="al-2" placeholder="例：600000" oninput="renderAlert()"></div>
+    <div><div style="font-size:10px;color:var(--text2);margin-bottom:3px;">台中</div><input type="number" id="al-3" placeholder="例：700000" oninput="renderAlert()"></div>
+    <div><div style="font-size:10px;color:var(--text2);margin-bottom:3px;">武骨</div><input type="number" id="al-4" placeholder="例：800000" oninput="renderAlert()"></div>
+    <div><div style="font-size:10px;color:var(--text2);margin-bottom:3px;">信義</div><input type="number" id="al-5" placeholder="例：600000" oninput="renderAlert()"></div>
+  </div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:1rem;align-items:flex-end;">
+    <div style="flex:1;min-width:100px;"><div style="font-size:10px;color:var(--text2);margin-bottom:3px;">預警月份</div>
+      <select id="al-month" onchange="renderAlert()">
+        <option value="4" selected>4月</option><option value="5">5月</option><option value="6">6月</option>
+        <option value="7">7月</option><option value="8">8月</option><option value="9">9月</option>
+        <option value="10">10月</option><option value="11">11月</option><option value="12">12月</option>
+      </select>
+    </div>
+    <div style="flex:1;min-width:80px;"><div style="font-size:10px;color:var(--text2);margin-bottom:3px;">已過天數</div><input type="number" id="al-days" value="15" oninput="renderAlert()"></div>
+    <div style="flex:1;min-width:80px;"><div style="font-size:10px;color:var(--text2);margin-bottom:3px;">當月總天數</div><input type="number" id="al-total" value="30" oninput="renderAlert()"></div>
+  </div>
+  <div id="alert-output"><div style="font-size:12px;color:var(--text2);">填入業績數字後自動顯示預警狀態</div></div>
+</div>
+
+<!-- ③ 活動行事曆 -->
+<div class="view" id="view-calendar">
+  <div class="sec">全年季節性強弱熱力圖（建議活動部署時機）</div>
+  <div id="heat-output"></div>
+  <div style="font-size:10px;color:var(--text2);margin-bottom:1rem;">
+    <span style="display:inline-block;width:12px;height:12px;background:#6DD098;border-radius:2px;vertical-align:middle;margin-right:3px;"></span>旺季(≥106)
+    <span style="display:inline-block;width:12px;height:12px;background:#C0DD97;border-radius:2px;vertical-align:middle;margin:0 3px 0 10px;"></span>平季(100–105)
+    <span style="display:inline-block;width:12px;height:12px;background:#EF9F27;border-radius:2px;vertical-align:middle;margin:0 3px 0 10px;"></span>淡季(94–99)
+    <span style="display:inline-block;width:12px;height:12px;background:#E24B4A;border-radius:2px;vertical-align:middle;margin:0 3px 0 10px;"></span>低谷(&lt;94)
+  </div>
+  <div class="sec">4–12月活動規劃建議</div>
+  <div class="cal-grid" id="cal-output"></div>
+
+  <div style="margin-top:1.25rem;background:var(--surface);border:0.5px solid var(--border);border-radius:var(--r2);padding:14px 16px;">
+    <div style="font-size:13px;font-weight:500;margin-bottom:4px;">新增今年活動 / 時事素材</div>
+    <div style="font-size:11px;color:var(--text2);margin-bottom:12px;">品牌層級的時事可不指定門市；限定活動可指定單店</div>
+    <div style="display:grid;grid-template-columns:80px 1fr 100px 100px auto;gap:8px;align-items:end;flex-wrap:wrap;">
+      <div>
+        <div style="font-size:10px;color:var(--text2);margin-bottom:3px;">月份</div>
+        <select id="ce-month" style="width:100%;">
+          <option value="4">4月</option><option value="5">5月</option><option value="6">6月</option>
+          <option value="7">7月</option><option value="8">8月</option><option value="9">9月</option>
+          <option value="10">10月</option><option value="11">11月</option><option value="12">12月</option>
+        </select>
+      </div>
+      <div>
+        <div style="font-size:10px;color:var(--text2);margin-bottom:3px;">活動／時事名稱</div>
+        <input type="text" id="ce-label" placeholder="例：世界盃話題推廣、母親節餐期限定…">
+      </div>
+      <div>
+        <div style="font-size:10px;color:var(--text2);margin-bottom:3px;">指定門市</div>
+        <select id="ce-store">
+          <option value="全品牌">全品牌</option>
+          <option>本店</option><option>神山</option><option>光復</option>
+          <option>台中</option><option>武骨</option><option>信義</option>
+        </select>
+      </div>
+      <div>
+        <div style="font-size:10px;color:var(--text2);margin-bottom:3px;">標籤顏色</div>
+        <select id="ce-color">
+          <option value="b-g">綠（限定麵）</option>
+          <option value="b-b">藍（節慶）</option>
+          <option value="b-p">紫（情感節日）</option>
+          <option value="b-a">橘（旺季）</option>
+          <option value="b-r">紅（注意）</option>
+          <option value="b-n">灰（一般）</option>
+        </select>
+      </div>
+      <div style="padding-bottom:1px;">
+        <button class="btn btn-primary" onclick="addCustomEvent()" style="white-space:nowrap;">新增 →</button>
+      </div>
+    </div>
+    <span id="ce-msg" style="font-size:11px;color:var(--green);display:block;margin-top:6px;"></span>
+    <div style="margin-top:12px;" id="custom-event-list"></div>
+  </div>
+</div>
+
+<!-- ④ 活動效益庫 -->
+<div class="view" id="view-db">
+  <div style="overflow-x:auto;">
+    <table class="tbl" id="db-table">
+      <thead><tr>
+        <th>活動名稱</th><th>門市</th><th>月份</th><th>MoM</th><th>vs季節基準</th><th>活動導流</th><th>類型</th><th>備注</th>
+      </tr></thead>
+      <tbody id="db-tbody"></tbody>
+    </table>
+  </div>
+  <div class="sec" style="margin-top:1.25rem;">新增活動記錄</div>
+  <div class="g2">
+    <div style="display:flex;flex-direction:column;gap:6px;">
+      <div><div style="font-size:10px;color:var(--text2);margin-bottom:3px;">活動名稱</div><input type="text" id="db-name" placeholder="例：神山料理長夏季限定"></div>
+      <div><div style="font-size:10px;color:var(--text2);margin-bottom:3px;">門市</div>
+        <select id="db-store"><option>神山</option><option>本店</option><option>光復</option><option>台中</option><option>武骨</option><option>信義</option><option>多店</option></select>
+      </div>
+      <div><div style="font-size:10px;color:var(--text2);margin-bottom:3px;">活動月份</div>
+        <select id="db-month">
+          <option value="4">4月</option><option value="5">5月</option><option value="6">6月</option>
+          <option value="7">7月</option><option value="8">8月</option><option value="9">9月</option>
+          <option value="10">10月</option><option value="11">11月</option><option value="12">12月</option>
+        </select>
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:6px;">
+      <div><div style="font-size:10px;color:var(--text2);margin-bottom:3px;">活動月 MoM（%，可留空）</div><input type="number" id="db-mom" placeholder="例：18.7"></div>
+      <div><div style="font-size:10px;color:var(--text2);margin-bottom:3px;">次月 MoM（%，可留空）</div><input type="number" id="db-next" placeholder="例：-5.8"></div>
+      <div><div style="font-size:10px;color:var(--text2);margin-bottom:3px;">活動類型</div>
+        <select id="db-type">
+          <option>料理長限定</option><option>單店限定麵</option><option>學生證</option>
+          <option>外送促銷</option><option>加購活動</option><option>B端合作</option>
+          <option>大巨蛋/活動日</option><option>便當新品</option>
+        </select>
+      </div>
+    </div>
+  </div>
+  <div style="display:flex;gap:8px;align-items:center;margin-top:8px;">
+    <button class="btn btn-primary" onclick="addActivity()">新增記錄 →</button>
+    <span id="db-msg" style="font-size:11px;color:var(--green);"></span>
+  </div>
+</div>
+
+<!-- ⑤ 每月更新 -->
+<div class="view" id="view-update">
+  <div class="card" style="margin-bottom:.75rem;">
+    <div class="card-t">每月底填入實際業績</div>
+    <div class="card-b">業績確認後貼入，工具會自動更新 YoY 基準線和下個月的預警閾值。同步到 Google Sheet 後所有人都能看到最新數據。</div>
+  </div>
+  <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:.75rem;">
+    <div><div style="font-size:10px;color:var(--text2);margin-bottom:3px;">更新月份</div>
+      <select id="upd-month" style="width:100px;">
+        <option value="4">4月</option><option value="5">5月</option><option value="6">6月</option>
+        <option value="7">7月</option><option value="8">8月</option><option value="9">9月</option>
+        <option value="10">10月</option><option value="11">11月</option><option value="12">12月</option>
+      </select>
+    </div>
+  </div>
+  <div class="g3" style="margin-bottom:.75rem;">
+    <div><div style="font-size:10px;color:var(--text2);margin-bottom:3px;">本店</div><input type="number" id="upd-0" placeholder="實際業績（元）"></div>
+    <div><div style="font-size:10px;color:var(--text2);margin-bottom:3px;">神山</div><input type="number" id="upd-1" placeholder="實際業績（元）"></div>
+    <div><div style="font-size:10px;color:var(--text2);margin-bottom:3px;">光復</div><input type="number" id="upd-2" placeholder="實際業績（元）"></div>
+    <div><div style="font-size:10px;color:var(--text2);margin-bottom:3px;">台中</div><input type="number" id="upd-3" placeholder="實際業績（元）"></div>
+    <div><div style="font-size:10px;color:var(--text2);margin-bottom:3px;">武骨</div><input type="number" id="upd-4" placeholder="實際業績（元）"></div>
+    <div><div style="font-size:10px;color:var(--text2);margin-bottom:3px;">信義</div><input type="number" id="upd-5" placeholder="實際業績（元）"></div>
+  </div>
+  <div style="display:flex;gap:8px;align-items:center;">
+    <button class="btn btn-primary" onclick="updateMonth()">儲存並同步 →</button>
+    <span id="upd-msg" style="font-size:11px;"></span>
+  </div>
+  <div class="sec" style="margin-top:1.25rem;">2026年已更新數據</div>
+  <div id="upd-history"></div>
+</div>
+
+</div><!-- /.app -->
+
+<script>
+// ═══════════════════════════════════════════════
+// 數據層
+// ═══════════════════════════════════════════════
+const STORES = ['本店','神山','光復','台中','武骨','信義'];
+const MONTHS = ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
+const STORE_COLORS = {
+  '本店':'0C447C','神山':'085041','光復':'633806',
+  '台中':'444441','武骨':'3C3489','信義':'A32D2D'
+};
+
+// 本地數據（Google Sheet 同步後會覆蓋）
+let D = {
+  rev2025: {
+    '本店':[2095182,2011788,2012517,1948401,1921191,1944105,2063232,2131648,1883088,1964874,2006272,1845955],
+    '神山':[2122588,2071376,2177607,1857635,1859266,1733971,1937502,1899699,1703769,1632442,1936990,1824225],
+    '光復':[1632180,1545842,1621373,1488143,1606987,1500974,1671413,1507576,1373176,1423651,1695102,1530527],
+    '台中':[1838282,1711303,1880765,1676784,1815987,1819778,1821834,1758172,1729148,1708646,1783593,1745635],
+    '武骨':[1978145,1708819,1822780,1826609,1863146,1740899,1808534,1987446,1705058,2087201,1969379,1905498],
+    '信義':[0,0,0,0,0,0,956031,3855048,2481208,2375806,2111743,2018308],
+  },
+  rev2026: {
+    '本店':[1849341,1722571,1805907,0,0,0,0,0,0,0,0,0],
+    '神山':[1802239,1678764,1763729,0,0,0,0,0,0,0,0,0],
+    '光復':[1586993,1417363,1574856,0,0,0,0,0,0,0,0,0],
+    '台中':[1730145,1644694,1837195,0,0,0,0,0,0,0,0,0],
+    '武骨':[1850905,2256750,1949793,0,0,0,0,0,0,0,0,0],
+    '信義':[1864365,1622378,1471587,0,0,0,0,0,0,0,0,0],
+  },
+  targets: {'本店':2070000,'神山':2100000,'光復':1730000,'台中':1800000,'武骨':1940000,'信義':1650000},
+  activities: [
+    // ── 限定麵：春季料理長（4/21–5/21，五店）──
+    // vs_base = 季節基準修正值（剔除季節因素，比MoM更準確）
+    {name:'春季料理長限定',store:'光復',month:5,mom_pct:8.0,vs_base:2.3,next_mom_pct:null,type:'料理長限定',mechanism:'部分帶客',note:'活動延伸到6/4，5月回彈+8%中部分來自限定麵帶客'},
+    {name:'春季料理長限定',store:'武骨',month:5,mom_pct:2.0,vs_base:3.5,next_mom_pct:null,type:'料理長限定',mechanism:'部分帶客',note:'武骨春季略有帶客效果'},
+    {name:'春季料理長限定',store:'台中',month:5,mom_pct:8.3,vs_base:0.9,next_mom_pct:null,type:'料理長限定',mechanism:'現有客消費',note:'銷售625碗最多但季節基準+0.9%，客人本來就要來'},
+    {name:'春季料理長限定',store:'本店',month:5,mom_pct:-1.4,vs_base:-3.6,next_mom_pct:null,type:'料理長限定',mechanism:'現有客消費',note:'賣576碗業績仍下滑，春季限定對本店完全不帶新客'},
+    {name:'春季料理長限定',store:'神山',month:5,mom_pct:0.1,vs_base:-3.5,next_mom_pct:null,type:'料理長限定',mechanism:'現有客消費',note:'4月是神山季節性最差月（指數86），限定麵未能逆轉'},
+    // ── 限定麵：麵王（6/26–7/24，五店）──
+    {name:'麵王限定',store:'光復',month:7,mom_pct:11.4,vs_base:11.6,next_mom_pct:null,type:'料理長限定',mechanism:'帶新客',note:'季節基準+11.6%最強，東區消費者對限定麵到訪動機高'},
+    {name:'麵王限定',store:'神山',month:7,mom_pct:11.7,vs_base:7.7,next_mom_pct:null,type:'料理長限定',mechanism:'帶新客',note:'達成率58%卻業績+7.7%，限定麵帶進的客消費了更多其他品項'},
+    {name:'麵王限定',store:'本店',month:7,mom_pct:6.1,vs_base:4.7,next_mom_pct:null,type:'料理長限定',mechanism:'部分帶客',note:'完售且有效益，本店夏季限定有部分帶客效果'},
+    {name:'麵王限定',store:'台中',month:7,mom_pct:0.1,vs_base:2.3,next_mom_pct:null,type:'料理長限定',mechanism:'現有客消費',note:'賣了539碗（最多）但業績+0.1%，台中客群對話題麵到訪動機弱'},
+    {name:'麵王限定',store:'武骨',month:7,mom_pct:3.9,vs_base:-0.9,next_mom_pct:null,type:'料理長限定',mechanism:'現有客消費',note:'季節基準-0.9%，麵王對武骨幾乎無帶客效果'},
+    // ── 促銷：Q3活動密集期 ──
+    {name:'12週年贈109元套餐',store:'本店',month:7,mom_pct:null,vs_base:null,next_mom_pct:null,type:'贈品活動',mechanism:'現有客消費',note:'兌換率2.3%（393次/17,226來客），品牌意義高，業績直接增量有限'},
+    {name:'12週年贈109元套餐',store:'神山',month:7,mom_pct:null,vs_base:null,next_mom_pct:null,type:'贈品活動',mechanism:'現有客消費',note:'兌換率1.7%（244次）'},
+    {name:'12週年贈109元套餐',store:'台中',month:7,mom_pct:null,vs_base:null,next_mom_pct:null,type:'贈品活動',mechanism:'現有客消費',note:'兌換率1.9%（282次）'},
+    {name:'12週年贈109元套餐',store:'光復',month:7,mom_pct:null,vs_base:null,next_mom_pct:null,type:'贈品活動',mechanism:'現有客消費',note:'兌換率1.8%（212次）'},
+    {name:'12週年贈109元套餐',store:'武骨',month:7,mom_pct:null,vs_base:null,next_mom_pct:null,type:'贈品活動',mechanism:'現有客消費',note:'兌換率1.1%（160次），武骨客群對此類活動反應最弱'},
+    {name:'信義同慶贈叉燒飯跨店兌換',store:'光復',month:8,mom_pct:null,vs_base:null,next_mom_pct:null,type:'跨店聯動',mechanism:'跨店移動',note:'在信義消費可至其他店換叉燒飯。光復108次最多，代表信義開幕帶動東區消費者跨店移動'},
+    {name:'新鮮人升級79元',store:'本店',month:9,mom_pct:null,vs_base:null,next_mom_pct:null,type:'套餐升級',mechanism:'現有客消費',note:'兌換率4.2%（727次），本店學生客群最有效'},
+    {name:'新鮮人升級79元',store:'台中',month:9,mom_pct:null,vs_base:null,next_mom_pct:null,type:'套餐升級',mechanism:'現有客消費',note:'兌換率4.2%（635次），台中學生/科技業效果與本店並列最強'},
+    {name:'新鮮人升級79元',store:'神山',month:9,mom_pct:null,vs_base:null,next_mom_pct:null,type:'套餐升級',mechanism:'現有客消費',note:'兌換率3.6%（509次），中等'},
+    {name:'新鮮人升級79元',store:'光復',month:9,mom_pct:null,vs_base:null,next_mom_pct:null,type:'套餐升級',mechanism:'現有客消費',note:'兌換率1.7%（208次），效果較弱'},
+    {name:'新鮮人升級79元',store:'武骨',month:9,mom_pct:null,vs_base:null,next_mom_pct:null,type:'套餐升級',mechanism:'現有客消費',note:'兌換率0.9%（121次），武骨客群非學生族群，效果最弱，不建議重複'},
+    {name:'Uber買一送一叉燒飯',store:'神山',month:9,mom_pct:null,vs_base:null,next_mom_pct:null,type:'外送促銷',mechanism:'外送帶客',note:'兌換率1.1%（149次），有效'},
+    {name:'Uber買一送一叉燒飯',store:'光復',month:9,mom_pct:null,vs_base:null,next_mom_pct:null,type:'外送促銷',mechanism:'外送帶客',note:'兌換率1.1%（138次），有效'},
+    {name:'Uber買一送一叉燒飯',store:'本店',month:9,mom_pct:null,vs_base:null,next_mom_pct:null,type:'外送促銷',mechanism:'外送帶客',note:'兌換率0.06%（10次），再次確認本店外送結構性限制'},
+    // ── 限定麵：秋季料理長（10/28–11/30，六店）──
+    {name:'秋季料理長限定',store:'光復',month:11,mom_pct:19.1,vs_base:17.5,next_mom_pct:-9.7,type:'料理長限定',mechanism:'帶新客',note:'季節基準+17.5%最強；達成率66%但業績爆發，帶來的客消費了更多其他品項'},
+    {name:'秋季料理長限定',store:'神山',month:11,mom_pct:18.7,vs_base:12.6,next_mom_pct:-5.8,type:'料理長限定',mechanism:'帶新客',note:'銷售與業績雙強，秋季限定是神山全年最有效的業績工具'},
+    {name:'秋季料理長限定',store:'本店',month:11,mom_pct:2.1,vs_base:5.7,next_mom_pct:-8.0,type:'料理長限定',mechanism:'部分帶客',note:'季節基準+5.7%比MoM好，秋季對本店有部分帶客效果（比春季進步）'},
+    {name:'秋季料理長限定',store:'台中',month:11,mom_pct:4.4,vs_base:3.2,next_mom_pct:null,type:'料理長限定',mechanism:'部分帶客',note:'效益優於春季，但仍遠低於神山/光復'},
+    {name:'秋季料理長限定',store:'武骨',month:11,mom_pct:-5.6,vs_base:3.7,next_mom_pct:null,type:'料理長限定',mechanism:'部分帶客',note:'MoM被10月連假高基期失真；季節基準+3.7%才是真實效益'},
+    {name:'秋季料理長限定',store:'信義',month:11,mom_pct:-11.1,vs_base:null,next_mom_pct:null,type:'料理長限定',mechanism:'效益被掩蓋',note:'Dream Plaza持續下滑趨勢掩蓋活動效益，無法正確評估'},
+    // ── 促銷：Q4活動 ──
+    {name:'限定麵打卡送豆腐',store:'台中',month:11,mom_pct:null,vs_base:null,next_mom_pct:null,type:'打卡活動',mechanism:'現有客消費',note:'兌換率1.0%（150次/14,383來客），打卡活動真正價值在社群擴散而非業績'},
+    {name:'限定麵打卡送豆腐',store:'神山',month:11,mom_pct:null,vs_base:null,next_mom_pct:null,type:'打卡活動',mechanism:'現有客消費',note:'兌換率1.0%（133次）'},
+    {name:'內用滿300加購叉燒飯$39',store:'本店',month:11,mom_pct:null,vs_base:null,next_mom_pct:null,type:'加購活動',mechanism:'現有客消費',note:'213次×$39=$8,307直接增量（14天），月換算$17,000–19,000，ROI最高'},
+    {name:'Uber買一送一炸物（神山）',store:'神山',month:11,mom_pct:null,vs_base:null,next_mom_pct:null,type:'外送促銷',mechanism:'外送帶客',note:'兌換率0.07%（9次），效果極弱，炸物品項吸引力遠低於叉燒飯，不建議重複'},
+    {name:'內用滿300加購叉燒飯$39',store:'本店',month:12,mom_pct:null,vs_base:null,next_mom_pct:null,type:'加購活動',mechanism:'現有客消費',note:'236次×$39=$9,204直接增量（14天），兌換數比11月更高，建議常設化'},
+    // ── 2026 Q1 ──
+    {name:'台中學生證（只台中）',store:'台中',month:3,mom_pct:11.7,vs_base:null,next_mom_pct:null,type:'套餐升級',mechanism:'部分帶客',note:'2026年3月，單店獨跑。同期多店跑時-1.7%，單店+11.7%，稀缺性是關鍵'},
+  ]
+};
+
+// ═══════════════════════════════════════════════
+// Google Sheet 同步
+// ═══════════════════════════════════════════════
+let API_URL = localStorage.getItem('musashi_api_url') || '';
+
+window.onload = () => {
+  if(API_URL) document.getElementById('api-url').value = API_URL;
+  renderAll();
+};
+
+async function syncData() {
+  const url = document.getElementById('api-url').value.trim();
+  if(!url){ alert('請先貼上 Apps Script 網址'); return; }
+  API_URL = url;
+  localStorage.setItem('musashi_api_url', url);
+  document.getElementById('last-sync').textContent = '同步中...';
+  try {
+    const res = await fetch(url);
+    const json = await res.json();
+    if(json.error) throw new Error(json.error);
+
+    // 轉換 rev2025
+    if(json.rev2025) {
+      json.rev2025.forEach(row => {
+        const s = row.store;
+        if(D.rev2025[s]) {
+          D.rev2025[s] = Array.from({length:12}, (_,i) => Number(row['m'+(i+1)])||0);
+        }
+      });
+    }
+    // 轉換 rev2026
+    if(json.rev2026) {
+      json.rev2026.forEach(row => {
+        const s = row.store;
+        if(D.rev2026[s]) {
+          D.rev2026[s] = Array.from({length:12}, (_,i) => Number(row['m'+(i+1)])||0);
+        }
+      });
+    }
+    // targets
+    if(json.targets) {
+      json.targets.forEach(row => { D.targets[row.store] = Number(row.target); });
+    }
+    // activities
+    if(json.customEvents && Array.isArray(json.customEvents)) {
+      D.customEvents = json.customEvents.map(e=>({
+        month: Number(e.month), label: String(e.label),
+        store: String(e.store||''), color: String(e.color||'b-n')
+      }));
+    }
+    if(json.activities) {
+      D.activities = json.activities.map(a => ({
+        name: a.name, store: a.store,
+        month: Number(a.month),
+        mom_pct:      a.mom_pct===''||a.mom_pct==null      ? null : Number(a.mom_pct),
+        vs_base:      a.vs_base===''||a.vs_base==null       ? null : Number(a.vs_base),
+        next_mom_pct: a.next_mom_pct===''||a.next_mom_pct==null ? null : Number(a.next_mom_pct),
+        type: a.type, mechanism: a.mechanism||'', note: a.note||''
+      }));
+    }
+
+    const now = new Date().toLocaleString('zh-TW');
+    document.getElementById('last-sync').textContent = `上次同步：${now}`;
+    renderAll();
+  } catch(e) {
+    document.getElementById('last-sync').textContent = `同步失敗：${e.message}`;
+  }
+}
+
+async function postData(body) {
+  if(!API_URL) return false;
+  try {
+    await fetch(API_URL, {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify(body),
+      mode:'no-cors'
+    });
+    return true;
+  } catch(e) { return false; }
+}
+
+// ═══════════════════════════════════════════════
+// 計算工具
+// ═══════════════════════════════════════════════
+function getSeasonalIdx(store) {
+  const d = D.rev2025[store];
+  if(!d) return Array(12).fill(null);
+  const valid = d.filter(v=>v>0);
+  if(!valid.length) return Array(12).fill(null);
+  const avg = valid.reduce((s,v)=>s+v,0)/valid.length;
+  return d.map(v => v>0 ? Math.round(v/avg*100*10)/10 : null);
+}
+
+function getRecentYoy(store) {
+  const d25 = D.rev2025[store], d26 = D.rev2026[store];
+  const pairs = [0,1,2].map(i => {
+    const v25=d25?d25[i]:0, v26=d26?d26[i]:0;
+    return v25>0&&v26>0 ? (v26-v25)/v25 : null;
+  }).filter(v=>v!==null);
+  return pairs.length ? pairs.reduce((s,v)=>s+v,0)/pairs.length : -0.06;
+}
+
+function getBaseForecast(store, monthIdx) {
+  const d25 = D.rev2025[store];
+  if(!d25||!d25[monthIdx]) return null;
+  return Math.round(d25[monthIdx] * (1 + getRecentYoy(store)));
+}
+
+function fmt(v) { return '$'+Math.round(v/10000)+'萬'; }
+function fmtPct(v) { return (v>0?'+':'')+Math.round(v*10)/10+'%'; }
+function clamp(v,a,b){return Math.min(Math.max(v,a),b);}
+
+// ═══════════════════════════════════════════════
+// ① 業績預測
+// ═══════════════════════════════════════════════
+function renderForecast() {
+  const store = document.getElementById('fc-store').value;
+  const month = parseInt(document.getElementById('fc-month').value);
+  const mi = month-1;
+  const si = getSeasonalIdx(store);
+  const siVal = si[mi];
+  const base = getBaseForecast(store, mi);
+  const target = D.targets[store];
+  const yoy = getRecentYoy(store);
+  const gap = base ? base-target : null;
+
+  const siLabel = siVal===null?'—':siVal>=106?'旺季':siVal>=100?'平季':siVal>=94?'淡季':'低谷';
+  const siCls = siVal===null?'b-n':siVal>=106?'b-g':siVal>=100?'b-b':siVal>=94?'b-a':'b-r';
+  const gapColor = gap===null?'#888':gap>=0?'var(--green)':'var(--red)';
+
+  let html = `<div class="g4" style="margin-bottom:.75rem;">
+    <div class="mc"><div class="l">季節指數</div>
+      <div class="v">${siVal||'—'} <span class="badge ${siCls}" style="font-size:10px;vertical-align:middle;">${siLabel}</span></div>
+      <div class="s">100=年均水平，資料來源2025年</div></div>
+    <div class="mc"><div class="l">基準預測（無活動）</div>
+      <div class="v">${base?fmt(base):'—'}</div>
+      <div class="s">2025同月 × Q1 YoY均值(${Math.round(yoy*100)}%)</div></div>
+    <div class="mc"><div class="l">月目標</div>
+      <div class="v">${fmt(target)}</div><div class="s">現行目標設定</div></div>
+    <div class="mc"><div class="l">預測缺口</div>
+      <div class="v" style="color:${gapColor};">${gap===null?'—':gap>=0?'+'+fmt(gap):'-'+fmt(Math.abs(gap))}</div>
+      <div class="s">${gap===null?'':gap>=0?'預測可達標，無需特別活動':'需要活動介入才能達標'}</div></div>
+  </div>`;
+
+  if(gap!==null && gap<0) {
+    const neededPct = Math.round(Math.abs(gap)/base*100);
+    html += `<div class="alert-box red"><div class="at">${store} ${month}月 預測缺口 ${fmt(Math.abs(gap))}（需 +${neededPct}%）</div>
+      <div class="ab">按目前趨勢預測 ${fmt(base)}，距目標 ${fmt(target)} 還差 ${fmt(Math.abs(gap))}。以下是基於歷史活動效益的補足建議：</div></div>`;
+    getSuggestions(store, month, neededPct).forEach(s => {
+      html += `<div class="card"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+        <div class="card-t">${s.name}</div><span class="badge ${s.conf==='高'?'b-g':s.conf==='中'?'b-a':'b-n'}">${s.conf}信心</span></div>
+        <div class="card-b">${s.desc}</div></div>`;
+    });
+  } else if(gap!==null) {
+    html += `<div class="alert-box green"><div class="at">${store} ${month}月 自然可達標（預測超標 ${fmt(gap)}）</div>
+      <div class="ab">這個月不需要業績刺激型活動。建議把資源放在 Ocard 回訪推播，把這個月的新客轉化為下個月的熟客。</div></div>`;
+  }
+
+  // 全年熱力圖（單店）
+  html += `<div class="sec" style="margin-top:1rem;">${store} 全年季節指數</div>
+    <div style="display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:3px;margin-bottom:4px;">`;
+  si.forEach((v,i)=>{
+    const isThis = i===mi;
+    const bg = v===null?'#E2E8F0':v>=106?'#6DD098':v>=100?'#C0DD97':v>=94?'#EF9F27':'#E24B4A';
+    const txt = v===null?'#94A3B8':v>=106?'#173404':v>=100?'#27500A':v>=94?'#412402':'#791F1F';
+    html += `<div><div style="height:28px;background:${bg};border-radius:4px;border:${isThis?'2px solid #1D6FA5':'none'};display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:600;color:${txt};">${v||'—'}</div>
+      <div style="text-align:center;font-size:8px;color:var(--text3);margin-top:2px;">${MONTHS[i]}</div></div>`;
+  });
+  html += `</div>`;
+
+  // 近三個月實績 vs 2025
+  html += `<div class="sec">Q1 2026 vs 2025 同期實績</div>
+    <div class="g3">`;
+  [0,1,2].forEach(i=>{
+    const v26 = D.rev2026[store]?.[i]||0;
+    const v25 = D.rev2025[store]?.[i]||0;
+    const yoyV = v25>0&&v26>0 ? (v26-v25)/v25*100 : null;
+    const col = yoyV===null?'#888':yoyV>=0?'var(--green)':'var(--red)';
+    html += `<div class="mc"><div class="l">${MONTHS[i]}</div>
+      <div class="v">${v26?fmt(v26):'—'}</div>
+      <div class="s" style="color:${col};">${yoyV!==null?fmtPct(yoyV)+' YoY':''}</div></div>`;
+  });
+  html += `</div>`;
+
+  document.getElementById('fc-output').innerHTML = html;
+}
+
+function getSuggestions(store, month, neededPct) {
+  const sug = [];
+  // 只用「帶新客」和「部分帶客」機制的限定麵來估算平均效益（剔除現有客消費的數據）
+  const storeActs = D.activities.filter(a=>
+    a.store===store && a.vs_base!==null &&
+    (a.mechanism==='帶新客'||a.mechanism==='部分帶客') &&
+    a.type==='料理長限定'
+  );
+  const avgEffect = storeActs.length ? storeActs.reduce((s,a)=>s+(a.vs_base||0),0)/storeActs.length : 0;
+  const map = {
+    '神山':[
+      {name:'料理長季節限定麵',conf:'高',desc:`歷史平均效益 +${Math.round(avgEffect||13)}%。建議月中上線持續3–4週。料理長限定是神山最強業績工具，已驗證4月+7.1%、7月+11.7%、11月+18.7%。`},
+      {name:'太刀限量夜場（週四19–21時）',conf:'中',desc:'太刀是神山獨家高客單品，限量場景製造平日到店動機。無直接歷史數據，估計週四到店客+15–20%。'},
+    ],
+    '光復':[
+      {name:'大巨蛋活動日聯動',conf:'高',desc:`確認${month}月大巨蛋活動排程，活動週提前一週在 IG 推廣。11月活動驗證光復+19.1%，活動日效應明確。`},
+      {name:'Uber下午限時折扣（14–17時）',conf:'高',desc:'光復 Uber YoY+57%，三月連漲。下午限時折扣成本低、效果快，估計月增外送業績$3–5萬。'},
+    ],
+    '本店':[
+      {name:'學生證活動（17時後）',conf:'中',desc:'11月限定麵本店僅+2.1%，說明限定麵對本店客群效果弱。學生證搭配下課後時段更符合學生六成的客群結構。'},
+      {name:'誠品文化主題週',conf:'中',desc:'與誠品月份活動配合，強化「職人×讀書人」品牌感，沒有直接歷史數據，符合誠品讀者的消費動機。'},
+    ],
+    '台中':[
+      {name:'店長限定麵（單店獨跑）',conf:'高',desc:`台中店長限定8月$176萬、12月$175萬，估計效益+8–12%。注意避開台中市區大型活動日，那些日期業績會被外部事件壓低。`},
+      {name:'Uber外送月均折扣',conf:'高',desc:'台中 Uber 3月YoY+73%，月促成本低效果穩定。估計月增業績$5–8萬。'},
+    ],
+    '武骨':[
+      {name:'高雄演唱會/大型活動聯動',conf:'高',desc:`確認${month}月高雄大型活動排程，活動週在 IG 和熊貓定向推廣。10月連假$209萬、11月演唱會$197萬、2月過年$227萬，外部事件是武骨最強業績觸發器。`},
+      {name:'便當新口味上線',conf:'高',desc:'便當已佔業績9%，新口味上線有話題效果，帶動外帶新客進入消費軌道。'},
+    ],
+    '信義':[
+      {name:'企業員工B端合作',conf:'中',desc:'福委會合作建立固定B端客源是最可預測的補業績方式，需提前1–2個月建立關係。'},
+      {name:'花車便當週限定口味',conf:'中',desc:'1月花車便當378筆$58,282，每週限定口味話題化，讓辦公族有定期關注的理由。'},
+    ],
+  };
+  return (map[store]||[]).slice(0,3);
+}
+
+// ═══════════════════════════════════════════════
+// ② 即時預警
+// ═══════════════════════════════════════════════
+function renderAlert() {
+  const days = parseInt(document.getElementById('al-days').value)||1;
+  const total = parseInt(document.getElementById('al-total').value)||30;
+  const month = parseInt(document.getElementById('al-month').value);
+  const mi = month-1;
+
+  const inputs = STORES.map((_,i) => parseFloat(document.getElementById('al-'+i).value)||0);
+  if(inputs.every(v=>v===0)){
+    document.getElementById('alert-output').innerHTML='<div style="font-size:12px;color:var(--text2);">填入截至今日業績後自動顯示預警狀態</div>';
+    return;
+  }
+
+  let html = '';
+  STORES.forEach((store,i)=>{
+    const curr = inputs[i];
+    if(!curr) return;
+    const target = D.targets[store];
+    const projected = Math.round(curr/days*total);
+    const progress = Math.round(projected/target*100);
+    const base = getBaseForecast(store, mi);
+    const col = STORE_COLORS[store]||'888';
+    let level, cls, action;
+    if(progress>=100){level='達標軌道';cls='green';action='目前進度良好。建議把資源放在 Ocard 14天回訪推播，把這個月的新客轉化為熟客。';}
+    else if(progress>=90){level='輕微落後';cls='amber';action=`月底缺口約 ${fmt(target-projected)}。月底前最後一週啟動 Ocard 會員限定優惠，或加強外送平台曝光。`;}
+    else if(progress>=80){level='需要介入';cls='amber';action=`月底缺口約 ${fmt(target-projected)}。本週啟動外送限時促銷或加購機制。若下週無改善，啟動活動帶客。`;}
+    else{level='立即啟動活動';cls='red';action=`月底缺口約 ${fmt(target-projected)}。按目前進度月底達標困難。立即啟動對${store}客群有效的活動。`;}
+
+    const barColor = progress>=100?'#3B6D11':progress>=90?'#EF9F27':'#E24B4A';
+    html += `<div class="card" style="border-left:3px solid #${col};border-radius:0 var(--r2) var(--r2) 0;margin-bottom:8px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+        <div style="font-size:13px;font-weight:600;">${store}</div>
+        <div style="display:flex;align-items:center;gap:6px;">
+          <span style="font-size:11px;color:var(--text2);">月${days}天</span>
+          <span class="badge b-${cls==='green'?'g':cls==='amber'?'a':'r'}">${level}</span>
+        </div>
+      </div>
+      <div class="g4" style="margin-bottom:8px;">
+        <div class="mc"><div class="l">截至${days}天</div><div class="v" style="font-size:14px;">${fmt(curr)}</div></div>
+        <div class="mc"><div class="l">月底預估</div><div class="v" style="font-size:14px;">${fmt(projected)}</div></div>
+        <div class="mc"><div class="l">月目標</div><div class="v" style="font-size:14px;">${fmt(target)}</div></div>
+        <div class="mc"><div class="l">達標進度</div><div class="v" style="font-size:14px;color:${barColor};">${progress}%</div></div>
+      </div>
+      <div class="bar-bg" style="margin-bottom:8px;"><div class="bar-fill" style="width:${clamp(progress,0,100)}%;background:${barColor};"></div></div>
+      <div class="alert-box ${cls}" style="margin-bottom:0;"><div class="ab">${action}</div></div>
+    </div>`;
+  });
+
+  document.getElementById('alert-output').innerHTML = html||'<div style="font-size:12px;color:var(--text2);">請填入業績數字。</div>';
+}
+
+// ═══════════════════════════════════════════════
+// ③ 活動行事曆
+// ═══════════════════════════════════════════════
+function renderCalendar() {
+  // 熱力圖
+  let heatHtml = `<div class="heat-row">${['','1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'].map(m=>`<div class="month-head">${m}</div>`).join('')}</div>`;
+  STORES.forEach(store=>{
+    const si = getSeasonalIdx(store);
+    const acts = D.activities.filter(a=>a.store===store);
+    heatHtml += `<div class="heat-row"><div class="heat-label">${store}</div>`;
+    si.forEach((v,i)=>{
+      const hasAct = acts.some(a=>a.month===i+1);
+      const bg = v===null?'#E2E8F0':v>=106?'#6DD098':v>=100?'#C0DD97':v>=94?'#EF9F27':'#E24B4A';
+      const txt = v===null?'#94A3B8':v>=106?'#173404':v>=100?'#27500A':v>=94?'#412402':'#791F1F';
+      heatHtml += `<div class="heat-cell" style="background:${bg};color:${txt};">${v||'—'}${hasAct?'<span style=\'font-size:8px;\'>●</span>':''}</div>`;
+    });
+    heatHtml += `</div>`;
+  });
+  document.getElementById('heat-output').innerHTML = heatHtml;
+
+  // 2026年品牌時事素材（品牌層級）+ 自訂活動
+  const BRAND_EVENTS_2026 = [
+    {month:3, label:'白色情人節', color:'b-p'},
+    {month:4, label:'清明/兒童節連假', color:'b-b'},
+    {month:5, label:'母親節', color:'b-p'},
+    {month:6, label:'端午連假', color:'b-b'},
+    {month:6, label:'世界盃預選賽', color:'b-g'},
+    {month:7, label:'世界盃', color:'b-g'},
+    {month:7, label:'暑假開始', color:'b-b'},
+    {month:8, label:'七夕情人節', color:'b-p'},
+    {month:8, label:'暑假', color:'b-b'},
+    {month:9, label:'教師節', color:'b-n'},
+    {month:9, label:'開學（學生促銷）', color:'b-b'},
+    {month:10, label:'多個連假', color:'b-b'},
+    {month:10, label:'中秋節', color:'b-a'},
+    {month:11, label:'秋季料理長限定', color:'b-g'},
+    {month:11, label:'大巨蛋演唱會旺季', color:'b-a'},
+    {month:12, label:'耶誕節', color:'b-p'},
+    {month:12, label:'年末聚餐旺季', color:'b-a'},
+  ];
+  // 合併自訂活動
+  const allBrandEvents = [...BRAND_EVENTS_2026, ...(D.customEvents||[])];
+
+  const SUGGESTIONS = {
+    4:['神山：料理長春季限定（歷史vs基準+2~4%）','光復：月份限定活動','台中：Uber促銷'],
+    5:['武骨：母親節大坪數聚餐推廣','台中：Uber外送促銷','世界拉麵日品牌話題內容'],
+    6:['武骨：端午連假活動備戰','神山：太刀夏季冷版','世界盃話題限定推廣'],
+    7:['神山：麵王或料理長夏季限定（歷史vs基準+7.7%）','武骨：暑假活動聯動','世界盃決賽前後品牌推廣'],
+    8:['信義：七夕女性場景活動','台中：店長限定（歷史$176萬）'],
+    9:['台中：學生證（只台中，歷史+11.7%）','光復：大巨蛋活動日聯動'],
+    10:['武骨：連假活動備戰（歷史$209萬）','神山：秋季限定前置規劃'],
+    11:['北部三店：料理長秋季限定（神山vs基準+12.6%、光復+17.5%）'],
+    12:['台中：店長限定（歷史$175萬）','武骨：聖誕/年末聚餐推廣'],
+  };
+  const PLAN_MONTHS = [4,5,6,7,8,9,10,11,12];
+  let calHtml = '';
+  PLAN_MONTHS.forEach(m=>{
+    const mi = m-1;
+    const weakStores = STORES.filter(s=>{ const v=getSeasonalIdx(s)[mi]; return v&&v<97; });
+    const strongStores = STORES.filter(s=>{ const v=getSeasonalIdx(s)[mi]; return v&&v>=106; });
+    const existingActs = D.activities.filter(a=>a.month===m);
+    const monthEvents = allBrandEvents.filter(e=>e.month===m);
+    calHtml += `<div class="cal-card">
+      <div class="cc-m">${m}月</div>
+      <div class="cc-weak">`;
+    if(weakStores.length) calHtml += `<span style="font-size:10px;color:var(--red);">需活動：${weakStores.join('、')}</span><br>`;
+    if(strongStores.length) calHtml += `<span style="font-size:10px;color:var(--green);">自然強：${strongStores.join('、')}</span>`;
+    calHtml += `</div>`;
+    monthEvents.forEach(e=> calHtml+=`<span class="cal-chip badge ${e.color}" style="margin:2px 2px 2px 0;">${e.label}${e.store?'·'+e.store:''}</span>`);
+    if(existingActs.length) {
+      const uniqActs = [...new Set(existingActs.map(a=>a.name))];
+      uniqActs.forEach(n=> calHtml+=`<span class="cal-chip badge b-g" style="margin:2px 2px 2px 0;">●${n}</span>`);
+    }
+    calHtml += `<div class="cc-sug">`;
+    (SUGGESTIONS[m]||[]).forEach(s=> calHtml+=`<div>→ ${s}</div>`);
+    calHtml += `</div></div>`;
+  });
+  document.getElementById('cal-output').innerHTML = calHtml;
+  renderCustomEventList();
+}
+
+function renderCustomEventList() {
+  const list = D.customEvents||[];
+  const el = document.getElementById('custom-event-list');
+  if(!el) return;
+  if(!list.length){ el.innerHTML='<div style="font-size:11px;color:var(--text2);">尚未新增自訂活動</div>'; return; }
+  el.innerHTML = list.map((e,i)=>`
+    <div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:0.5px solid var(--border);">
+      <span class="badge ${e.color||'b-n'}" style="font-size:10px;">${e.month}月</span>
+      <span style="font-size:12px;flex:1;">${e.label}${e.store?' · '+e.store:''}</span>
+      <button onclick="removeCustomEvent(${i})" style="font-size:10px;color:var(--red);background:none;border:none;cursor:pointer;">刪除</button>
+    </div>`).join('');
+}
+
+async function addCustomEvent() {
+  const month = parseInt(document.getElementById('ce-month').value);
+  const label = document.getElementById('ce-label').value.trim();
+  const store = document.getElementById('ce-store').value;
+  const color = document.getElementById('ce-color').value;
+  if(!label){ document.getElementById('ce-msg').textContent='請填入活動名稱'; return; }
+  if(!D.customEvents) D.customEvents = [];
+  const evt = {month, label, store: store==='全品牌'?'':store, color};
+  D.customEvents.push(evt);
+  await postData({action:'append_custom_event', ...evt});
+  document.getElementById('ce-label').value='';
+  document.getElementById('ce-msg').textContent='已新增';
+  setTimeout(()=>document.getElementById('ce-msg').textContent='',2000);
+  renderCalendar();
+}
+
+async function removeCustomEvent(i) {
+  if(!D.customEvents) return;
+  await postData({action:'delete_custom_event', index: i});
+  D.customEvents.splice(i,1);
+  renderCalendar();
+}
+
+// ═══════════════════════════════════════════════
+// ④ 活動效益庫
+// ═══════════════════════════════════════════════
+function renderDB() {
+  const tbody = document.getElementById('db-tbody');
+  const mechColor = {
+    '帶新客':'var(--purple)','部分帶客':'var(--blue)','現有客消費':'var(--text2)',
+    '外送帶客':'var(--green)','跨店移動':'var(--amber)','效益被掩蓋':'var(--red)',
+  };
+  const mechBg = {
+    '帶新客':'var(--purpleL)','部分帶客':'var(--blueL)','現有客消費':'var(--surface2)',
+    '外送帶客':'var(--greenL)','跨店移動':'var(--amberL)','效益被掩蓋':'var(--redL)',
+  };
+  tbody.innerHTML = D.activities.map(a=>{
+    const momColor = a.mom_pct===null?'#888':a.mom_pct>0?'var(--green)':'var(--red)';
+    const baseColor = a.vs_base===null?'#888':a.vs_base>8?'var(--green)':a.vs_base>2?'var(--amber)':a.vs_base>-2?'#888':'var(--red)';
+    const mech = a.mechanism||'—';
+    const mechC = mechColor[mech]||'var(--text2)';
+    const mechB = mechBg[mech]||'var(--surface2)';
+    return `<tr>
+      <td style="font-size:11px;">${a.name}</td>
+      <td><span class="badge b-b" style="font-size:9px;">${a.store}</span></td>
+      <td style="font-size:11px;">${MONTHS[(a.month||1)-1]}</td>
+      <td style="color:${momColor};font-weight:500;font-size:11px;">${a.mom_pct===null?'—':fmtPct(a.mom_pct)}</td>
+      <td style="color:${baseColor};font-weight:500;font-size:11px;">${a.vs_base===null?'—':fmtPct(a.vs_base)}</td>
+      <td><span style="font-size:9px;padding:2px 6px;border-radius:20px;background:${mechB};color:${mechC};">${mech}</span></td>
+      <td><span class="badge b-n" style="font-size:9px;">${a.type||''}</span></td>
+      <td style="font-size:10px;color:var(--text2);max-width:180px;">${a.note||''}</td>
+    </tr>`;
+  }).join('');
+}
+
+async function addActivity() {
+  const name = document.getElementById('db-name').value.trim();
+  const store = document.getElementById('db-store').value;
+  const month = parseInt(document.getElementById('db-month').value);
+  const mom = parseFloat(document.getElementById('db-mom').value);
+  const next = parseFloat(document.getElementById('db-next').value);
+  const type = document.getElementById('db-type').value;
+  if(!name){ document.getElementById('db-msg').textContent='請填入活動名稱'; return; }
+
+  const row = {name,store,month:String(month),mom_pct:isNaN(mom)?'':String(mom),next_mom_pct:isNaN(next)?'':String(next),type,note:''};
+  D.activities.push({name,store,month,mom_pct:isNaN(mom)?null:mom,next_mom_pct:isNaN(next)?null:next,type});
+  renderDB();
+
+  // 寫入 Google Sheet
+  await postData({action:'append_activity',name,store,month:String(month),mom_pct:isNaN(mom)?'':mom,vs_base:'',type,mechanism:'現有客消費',note:''});
+
+  document.getElementById('db-msg').textContent = `已新增：${name}`;
+  document.getElementById('db-name').value='';
+  document.getElementById('db-mom').value='';
+  document.getElementById('db-next').value='';
+  setTimeout(()=>document.getElementById('db-msg').textContent='',3000);
+}
+
+// ═══════════════════════════════════════════════
+// ⑤ 每月更新
+// ═══════════════════════════════════════════════
+async function updateMonth() {
+  const month = parseInt(document.getElementById('upd-month').value);
+  const mi = month-1;
+  const vals = STORES.map((_,i)=>parseFloat(document.getElementById('upd-'+i).value)||0);
+  if(vals.every(v=>v===0)){ document.getElementById('upd-msg').textContent='請填入至少一間店的業績'; return; }
+
+  const promises = [];
+  STORES.forEach((store,i)=>{
+    if(vals[i]>0){
+      D.rev2026[store][mi] = vals[i];
+      promises.push(postData({action:'update_rev',store,month,value:vals[i]}));
+    }
+  });
+  await Promise.all(promises);
+
+  document.getElementById('upd-msg').style.color='var(--green)';
+  document.getElementById('upd-msg').textContent=`${MONTHS[mi]} 更新完成，預測頁面已同步`;
+  renderHistory();
+  renderForecast();
+  setTimeout(()=>document.getElementById('upd-msg').textContent='',3000);
+}
+
+function renderHistory() {
+  const known = [];
+  STORES.forEach(s=>{
+    (D.rev2026[s]||[]).forEach((v,i)=>{ if(v>0) known.push({s,i,v}); });
+  });
+  if(!known.length){ document.getElementById('upd-history').innerHTML='<div style="font-size:12px;color:var(--text2);">尚無更新數據</div>'; return; }
+  const months = [...new Set(known.map(k=>k.i))].sort((a,b)=>a-b);
+  let html = `<div style="overflow-x:auto;"><table class="tbl"><thead><tr><th>門市</th>${months.map(m=>`<th>${MONTHS[m]}</th>`).join('')}</tr></thead><tbody>`;
+  STORES.forEach(s=>{
+    html += `<tr><td style="font-weight:500;">${s}</td>`;
+    months.forEach(m=>{
+      const v = D.rev2026[s]?.[m]||0;
+      const t = D.targets[s];
+      const col = v>0?(v>=t?'var(--green)':v>=t*.9?'var(--amber)':'var(--red)'):'var(--text3)';
+      html += `<td style="color:${col};font-weight:500;">${v>0?fmt(v):'—'}</td>`;
+    });
+    html += '</tr>';
+  });
+  html += '</tbody></table></div>';
+  document.getElementById('upd-history').innerHTML = html;
+}
+
+// ═══════════════════════════════════════════════
+// 導航 & 初始化
+// ═══════════════════════════════════════════════
+function sw(n){
+  ['forecast','alert','calendar','db','update'].forEach((x,i)=>{
+    document.querySelectorAll('.tab')[i].classList.toggle('active',x===n);
+    document.getElementById('view-'+x).classList.toggle('show',x===n);
+  });
+  if(n==='calendar') renderCalendar();
+  if(n==='db') renderDB();
+  if(n==='update') renderHistory();
+}
+
+function renderAll(){
+  renderForecast();
+  renderHistory();
+}
+</script>
+</body>
+</html>
